@@ -46,7 +46,7 @@ public final class App {
                                                                 .addHeader("Authorization", String.format("Basic %s", b64Auth))
                                                                 .setTimeout(Duration.ofSeconds(5))
                                                                 .build())
-                                                        .setInterval(Duration.ofSeconds(2))
+                                                        .setInterval(Duration.ofSeconds(5))
                                                         .build())
                                         .build())
                         .buildAndRegisterGlobal();
