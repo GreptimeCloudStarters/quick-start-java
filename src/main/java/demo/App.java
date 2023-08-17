@@ -32,24 +32,25 @@ public final class App {
         String auth = username + ":" + password;
         String b64Auth = new String(Base64.getEncoder().encode(auth.getBytes()));
 
-        OpenTelemetrySdk openTelemetrySdk =
-                OpenTelemetrySdk.builder()
-                        .setMeterProvider(
-                                SdkMeterProvider
-                                        .builder()
-                                        .setResource(resource)
-                                        .registerMetricReader(
-                                                PeriodicMetricReader
-                                                        .builder(OtlpHttpMetricExporter.builder()
-                                                                .setEndpoint(endpoint)
-                                                                .addHeader("x-greptime-db-name", db)
-                                                                .addHeader("Authorization", String.format("Basic %s", b64Auth))
-                                                                .setTimeout(Duration.ofSeconds(5))
-                                                                .build())
-                                                        .setInterval(Duration.ofSeconds(5))
-                                                        .build())
-                                        .build())
-                        .buildAndRegisterGlobal();
+        OtlpHttpMetricExporter exporter = OtlpHttpMetricExporter.builder()
+                .setEndpoint(endpoint)
+                .addHeader("X-Greptime-DB-Name", db)
+                .addHeader("Authorization", String.format("Basic %s", b64Auth))
+                .setTimeout(Duration.ofSeconds(5))
+                .build();
+        PeriodicMetricReader metricReader = PeriodicMetricReader
+                .builder(exporter)
+                .setInterval(Duration.ofSeconds(5))
+                .build();
+        SdkMeterProvider meterProvider = SdkMeterProvider
+                .builder()
+                .setResource(resource)
+                .registerMetricReader(metricReader)
+                .build();
+
+        OpenTelemetrySdk openTelemetrySdk = OpenTelemetrySdk.builder()
+                .setMeterProvider(meterProvider)
+                .buildAndRegisterGlobal();
         Runtime.getRuntime().addShutdownHook(new Thread(openTelemetrySdk::close));
         return openTelemetrySdk;
     }
