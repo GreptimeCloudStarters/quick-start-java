@@ -22,13 +22,12 @@ import io.opentelemetry.instrumentation.runtimemetrics.*;
  */
 public final class App {
 
-    static OpenTelemetry initOpenTelemetry(String dbHost, String db, String username, String password) {
+    static OpenTelemetry initOpenTelemetry(String endpoint, String db, String username, String password) {
         // Include required service.name resource attribute on all spans and metrics
         Resource resource =
                 Resource.getDefault()
                         .merge(Resource.builder()
                                 .put(SERVICE_NAME, "greptime-cloud-quick-start-java").build());
-        String endpoint = String.format("https://%s/v1/otlp/v1/metrics", dbHost);
         String auth = username + ":" + password;
         String b64Auth = new String(Base64.getEncoder().encode(auth.getBytes()));
 
@@ -55,10 +54,10 @@ public final class App {
         return openTelemetrySdk;
     }
 
-    static String getCmdArgValue(String argName ,String[] args){
+    static String getCmdArgValue(String argName, String defaultValue, String[] args){
         Options options = new Options();
-        Option dbHost = new Option("h", "host", true, "The host address of the GreptimeCloud service");
-        Option db = new Option("db", "database", true, "The database of the GreptimeCloud service");
+        Option dbHost = new Option("h", "host", true, "The host address of the GreptimeDB");
+        Option db = new Option("db", "database", true, "The database of the GreptimeDB");
         Option username = new Option("u", "username", true, "The username of the database");
         Option password = new Option("p", "password", true, "The password of the database");
         options.addOption(dbHost);
@@ -66,30 +65,31 @@ public final class App {
         options.addOption(username);
         options.addOption(password);
         CommandLine cmd;
-        CommandLineParser parser = new BasicParser();
+        CommandLineParser parser = new DefaultParser();
         HelpFormatter helper = new HelpFormatter();
         try {
             cmd = parser.parse(options, args);
-            if (cmd.hasOption(argName)) {
-                String arg = cmd.getOptionValue(argName);
-                return arg;
-            }
+            String arg = cmd.getOptionValue(argName, defaultValue);
+            return arg;
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             helper.printHelp("Usage:", options);
             System.exit(-1);
         }
-        helper.printHelp("Usage:", options);
-        System.exit(-1);
         return "";
     }
     public static void main(String[] args) throws Exception {
-        String dbHost = getCmdArgValue("host", args);
-        String db = getCmdArgValue("database", args);
-        String username = getCmdArgValue("username", args);
-        String password = getCmdArgValue("password", args);
-
-        OpenTelemetry openTelemetry = initOpenTelemetry(dbHost, db, username, password);
+        String dbHost = getCmdArgValue("host","localhost", args);
+        String db = getCmdArgValue("database", "public", args);
+        String username = getCmdArgValue("username", "", args);
+        String password = getCmdArgValue("password", "", args);
+        String endpoint = "";
+        if (dbHost == "localhost" || dbHost == "127.0.0.1"){
+            endpoint = String.format("http://%s:4000/v1/otlp/v1/metrics", dbHost);
+        } else {
+            endpoint = String.format("https://%s/v1/otlp/v1/metrics", dbHost);
+        }
+        OpenTelemetry openTelemetry = initOpenTelemetry(endpoint, db, username, password);
         BufferPools.registerObservers(openTelemetry);
         Classes.registerObservers(openTelemetry);
         Cpu.registerObservers(openTelemetry);
