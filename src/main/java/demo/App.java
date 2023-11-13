@@ -54,42 +54,70 @@ public final class App {
         return openTelemetrySdk;
     }
 
-    static String getCmdArgValue(String argName, String defaultValue, String[] args){
+    static Options generateCommandOptions() {
         Options options = new Options();
         Option dbHost = new Option("h", "host", true, "The host address of the GreptimeDB");
         Option db = new Option("db", "database", true, "The database of the GreptimeDB");
         Option username = new Option("u", "username", true, "The username of the database");
         Option password = new Option("p", "password", true, "The password of the database");
+        Option noSecure = new Option("ns", "no-secure", false, "Do not use secure connection to GreptimeDB" );
+        Option port = new Option("P", "port", true, "The port of the HTTP endpoint of GreptimeDB");
         options.addOption(dbHost);
         options.addOption(db);
         options.addOption(username);
         options.addOption(password);
+        options.addOption(noSecure);
+        options.addOption(port);
+        return options;
+    }
+
+    static CommandLine getCmd(String[] args) throws ParseException {
+        Options options = generateCommandOptions();
         CommandLine cmd;
         CommandLineParser parser = new DefaultParser();
-        HelpFormatter helper = new HelpFormatter();
+        cmd = parser.parse(options, args);
+        return cmd;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Options options = generateCommandOptions();
+        String dbHost = "";
+        String db = "";
+        String username = "";
+        String password = "";
+        String port = "";
+        boolean noSecure = false;
         try {
-            cmd = parser.parse(options, args);
-            String arg = cmd.getOptionValue(argName, defaultValue);
-            return arg;
+            CommandLine cmd = getCmd(args);
+            dbHost = cmd.getOptionValue("host", "localhost");
+            db = cmd.getOptionValue("database", "public");
+            username = cmd.getOptionValue("username", "");
+            password = cmd.getOptionValue("password", "");
+            port = cmd.getOptionValue("port", "");
+            if (cmd.hasOption("no-secure")){
+                noSecure = true;
+            }
         } catch (ParseException e) {
+            HelpFormatter helper = new HelpFormatter();
             System.out.println(e.getMessage());
             helper.printHelp("Usage:", options);
             System.exit(-1);
         }
-        return "";
-    }
-    public static void main(String[] args) throws Exception {
-        String dbHost = getCmdArgValue("host","localhost", args);
-        String db = getCmdArgValue("database", "public", args);
-        String username = getCmdArgValue("username", "", args);
-        String password = getCmdArgValue("password", "", args);
-        String endpoint = "";
-        if (dbHost == "localhost" || dbHost == "127.0.0.1"){
-            endpoint = String.format("http://%s:4000/v1/otlp/v1/metrics", dbHost);
+
+        String url = "";
+        if (noSecure){
+            url = "http://";
         } else {
-            endpoint = String.format("https://%s/v1/otlp/v1/metrics", dbHost);
+            url = "https://";
         }
-        OpenTelemetry openTelemetry = initOpenTelemetry(endpoint, db, username, password);
+
+        url += dbHost;
+        if (port != ""){
+            url = String.format("%s:%s", url, port);
+        }
+        url += "/v1/otlp/v1/metrics";
+
+        OpenTelemetry openTelemetry = initOpenTelemetry(url, db, username, password);
         BufferPools.registerObservers(openTelemetry);
         Classes.registerObservers(openTelemetry);
         Cpu.registerObservers(openTelemetry);
