@@ -21,7 +21,7 @@ Or build a jar file by yourself and run:
 
 ```shell
 ./gradlew shadowJar
-java -jar build/libs/quick-start-java-0.1.2-SNAPSHOT-all.jar -h <host> -db <dbname> -u <username> -p <password>
+java -jar build/libs/quick-start-java-0.1.3-SNAPSHOT-all.jar -h <host> -db <dbname> -u <username> -p <password>
 ```
 
 ## Release
@@ -30,16 +30,16 @@ java -jar build/libs/quick-start-java-0.1.2-SNAPSHOT-all.jar -h <host> -db <dbna
 2. Commit and push code
 3. Build jar
 
-```shell
-./gradlew shadowJar
-```
+    ```shell
+    ./gradlew shadowJar
+    ```
 
 4. Create a tag with the version and push it
 
-```shell
-git tag v<major>.<minor>.<patch>
-git push origin v<major>.<minor>.<patch>
-```
+    ```shell
+    git tag v<major>.<minor>.<patch>
+    git push origin v<major>.<minor>.<patch>
+    ```
 
 5. Add release and upload the jar file
 6. update the jar download link in `README.md`
