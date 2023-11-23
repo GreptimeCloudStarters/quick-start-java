@@ -56,17 +56,17 @@ public final class App {
 
     static Options generateCommandOptions() {
         Options options = new Options();
+        Option endpoint = new Option("e", "endpoint", true, "The HTTP endpoint of OTLP/HTTP exporter");
         Option dbHost = new Option("h", "host", true, "The host address of the GreptimeDB");
         Option db = new Option("db", "database", true, "The database of the GreptimeDB");
         Option username = new Option("u", "username", true, "The username of the database");
         Option password = new Option("p", "password", true, "The password of the database");
-        Option noSecure = new Option("ns", "no-secure", false, "Do not use secure connection to GreptimeDB" );
         Option port = new Option("P", "port", true, "The port of the HTTP endpoint of GreptimeDB");
+        options.addOption(endpoint);
         options.addOption(dbHost);
         options.addOption(db);
         options.addOption(username);
         options.addOption(password);
-        options.addOption(noSecure);
         options.addOption(port);
         return options;
     }
@@ -81,22 +81,20 @@ public final class App {
 
     public static void main(String[] args) throws Exception {
         Options options = generateCommandOptions();
+        String endpoint = "";
         String dbHost = "";
         String db = "";
         String username = "";
         String password = "";
         String port = "";
-        boolean noSecure = false;
         try {
             CommandLine cmd = getCmd(args);
+            endpoint = cmd.getOptionValue("endpoint", "");
             dbHost = cmd.getOptionValue("host", "localhost");
             db = cmd.getOptionValue("database", "public");
             username = cmd.getOptionValue("username", "");
             password = cmd.getOptionValue("password", "");
             port = cmd.getOptionValue("port", "");
-            if (cmd.hasOption("no-secure")){
-                noSecure = true;
-            }
         } catch (ParseException e) {
             HelpFormatter helper = new HelpFormatter();
             System.out.println(e.getMessage());
@@ -105,17 +103,16 @@ public final class App {
         }
 
         String url = "";
-        if (noSecure){
-            url = "http://";
+        if (endpoint != "") {
+            url = endpoint;
         } else {
             url = "https://";
+            url += dbHost;
+            if (port != ""){
+                url = String.format("%s:%s", url, port);
+            }
+            url += "/v1/otlp/v1/metrics";
         }
-
-        url += dbHost;
-        if (port != ""){
-            url = String.format("%s:%s", url, port);
-        }
-        url += "/v1/otlp/v1/metrics";
 
         OpenTelemetry openTelemetry = initOpenTelemetry(url, db, username, password);
         BufferPools.registerObservers(openTelemetry);
