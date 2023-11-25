@@ -7,21 +7,21 @@ This is a quick start demo for [GreptimeCloud](https://greptime.cloud/). It coll
 You can just download and run the jar file:
 
 ```shell
-curl -L https://github.com/GreptimeCloudStarters/quick-start-java/releases/download/v0.1.2/quick-start-java-0.1.2-SNAPSHOT-all.jar --output quick-start.jar
-java -jar quick-start.jar -h <host> -db <dbname> -u <username> -p <password>
+curl -L https://github.com/GreptimeCloudStarters/quick-start-java/releases/download/v0.1.2/quick-start-java-0.1.3-SNAPSHOT-all.jar --output quick-start.jar
+java -jar quick-start.jar -e <endpoint-url> -db <dbname> -u <username> -p <password>
 ```
 
 Clone the repository and run:
 
 ```shell
-./gradlew run --args="-h <host> -db <dbname> -u <username> -p <password>"
+./gradlew run --args="-e <endpoint-url> -db <dbname> -u <username> -p <password>"
 ```
 
 Or build a jar file by yourself and run:
 
 ```shell
 ./gradlew shadowJar
-java -jar build/libs/quick-start-java-0.1.3-SNAPSHOT-all.jar -h <host> -db <dbname> -u <username> -p <password>
+java -jar build/libs/quick-start-java-0.1.3-SNAPSHOT-all.jar -e <endpoint-url> -db <dbname> -u <username> -p <password>
 ```
 
 ## Release
